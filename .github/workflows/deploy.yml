@@ -20,7 +20,7 @@ on:
 # Repository variables (Settings → Secrets and variables → Actions → Variables):
 #   AWS_ROLE_ARN     : AppDeployRoleArn from the bootstrap stack (ECR + ECS)
 #   TF_AWS_ROLE_ARN  : TerraformDeployRoleArn from the bootstrap stack (infra)
-#   TF_STATE_BUCKET  : StateBucketName from the bootstrap stack
+# Terraform backend (bucket/key/region) is hardcoded in terraform/backend.tf.
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: dsb-lite
@@ -28,7 +28,6 @@ env:
   ECS_SERVICE: dsb-lite-service
   CONTAINER_NAME: dsb-lite
   TASK_FAMILY: dsb-lite
-  TF_STATE_KEY: dsb-lite/terraform.tfstate
   TF_WORKING_DIR: terraform
 
 # OIDC requires id-token: write. contents: read to checkout; pull-requests:
@@ -75,11 +74,9 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Terraform init
-        run: |
-          terraform init -input=false \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=${TF_STATE_KEY}" \
-            -backend-config="region=${AWS_REGION}"
+        # Backend bucket/key/region are hardcoded in backend.tf, so no
+        # -backend-config flags are needed here.
+        run: terraform init -input=false
 
       - name: Terraform validate
         run: terraform validate -no-color
@@ -122,7 +119,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR

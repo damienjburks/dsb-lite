@@ -11,25 +11,22 @@
 # which you deploy manually once per account. Use its StateBucketName output as
 # the backend `bucket`, then initialize this backend.
 #
-# The bucket/key/region are intentionally left out of this block and supplied
-# at init time so the same config works across accounts. Initialize with:
+# The bucket/key/region are set statically below, so initialization is just:
 #
-#   terraform init \
-#     -backend-config="bucket=dsb-lite-tfstate-<your-account-id>" \
-#     -backend-config="key=dsb-lite/terraform.tfstate" \
-#     -backend-config="region=us-east-1"
+#   terraform init
 #
-# Or copy backend.hcl.example to backend.hcl, fill it in, and run:
-#
-#   terraform init -backend-config=backend.hcl
+# The bucket name follows the bootstrap convention
+# dsb-lite-tfstate-<account-id>; update it here if the account changes.
 #
 # Using an older Terraform (< 1.10)? Remove `use_lockfile` below and add a
-# DynamoDB table for locking via -backend-config="dynamodb_table=<name>".
+# DynamoDB table for locking.
 # ---------------------------------------------------------------------------
 terraform {
   backend "s3" {
+    bucket       = "dsb-lite-tfstate-083281668894"
+    key          = "dsb-lite/terraform.tfstate"
+    region       = "us-east-1"
     encrypt      = true
     use_lockfile = true
-    # bucket / key / region are provided via -backend-config (see above).
   }
 }

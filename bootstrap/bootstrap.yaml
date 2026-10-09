@@ -14,20 +14,21 @@ Parameters:
     Default: dsb-lite
     Description: Prefix used to name resources and the state bucket.
 
-  GitHubRepository:
+  # Trust is scoped to a single GitHub org: any repo, branch, and event under
+  # it can assume the deploy roles — but nothing outside it.
+  GitHubOrg:
     Type: String
-    Description: >-
-      GitHub repo in "owner/name" form allowed to assume the deploy roles via
-      OIDC (e.g. devsecblueprint/dsb-lite).
-    AllowedPattern: "^[^/]+/[^/]+$"
-    ConstraintDescription: Must be in the form owner/name.
+    Default: devsecblueprint
+    Description: GitHub organization (or user) slug allowed to assume the roles via OIDC.
 
-  GitHubBranch:
+  # The org's IMMUTABLE numeric ID. Pinning it (rather than wildcarding the
+  # slug) is what restricts trust to OUR org only: a renamed or look-alike org
+  # with a matching slug cannot reuse this ID. Get it with:
+  #   gh api /orgs/<org> --jq .id    (or /users/<org> for a user account)
+  GitHubOrgId:
     Type: String
-    Default: main
-    Description: >-
-      Branch allowed to assume the deploy roles. Use "*" to allow any ref in the
-      repo (less strict).
+    Default: "156617339"
+    Description: Numeric GitHub organization/user ID (gh api /orgs/<org> --jq .id).
 
   CreateOIDCProvider:
     Type: String
@@ -46,10 +47,17 @@ Conditions:
 Resources:
 
   # --- Terraform remote state bucket ---------------------------------------
+  # DeletionPolicy: Delete so tearing down the bootstrap stack fully removes
+  # the bucket, leaving no orphaned resources behind on the next deploy.
+  #
+  # WARNING: this bucket holds Terraform remote state. Deleting it destroys the
+  # record of all Terraform-managed infrastructure. CloudFormation can only
+  # delete an EMPTY bucket, so empty it first (see bootstrap/README.md) — and be
+  # sure Terraform state is backed up or no longer needed before you do.
   TerraformStateBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${ProjectName}-tfstate-${AWS::AccountId}"
       VersioningConfiguration:
@@ -101,8 +109,12 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              # Trust OUR org only: pin the immutable org ID and wildcard the
+              # rest (any repo/branch/event). Matches the 2026-07-15 subject
+              # form repo:org@<ORG_ID>/name@<REPO_ID>:... — the pinned ID is
+              # what prevents a look-alike/renamed org from assuming the role.
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}"
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}@${GitHubOrgId}/*"
       Policies:
         - PolicyName: ecr-ecs-deploy
           PolicyDocument:
@@ -162,8 +174,12 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              # Trust OUR org only: pin the immutable org ID and wildcard the
+              # rest (any repo/branch/event). Matches the 2026-07-15 subject
+              # form repo:org@<ORG_ID>/name@<REPO_ID>:... — the pinned ID is
+              # what prevents a look-alike/renamed org from assuming the role.
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}"
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}@${GitHubOrgId}/*"
       Policies:
         - PolicyName: terraform-state-access
           PolicyDocument:
