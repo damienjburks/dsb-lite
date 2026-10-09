@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  DSB Lite bootstrap — prerequisites that must exist BEFORE Terraform runs.
+  Creates the S3 bucket for Terraform remote state, the GitHub Actions OIDC
+  provider, the app-deploy role (ECR + ECS), and the Terraform-deploy role
+  (broad infra permissions). Deploy this stack manually, once, per account.
+
+# ---------------------------------------------------------------------------
+# Parameters
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: dsb-lite
+    Description: Prefix used to name resources and the state bucket.
+
+  GitHubRepository:
+    Type: String
+    Description: >-
+      GitHub repo in "owner/name" form allowed to assume the deploy roles via
+      OIDC (e.g. devsecblueprint/dsb-lite).
+    AllowedPattern: "^[^/]+/[^/]+$"
+    ConstraintDescription: Must be in the form owner/name.
+
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: >-
+      Branch allowed to assume the deploy roles. Use "*" to allow any ref in the
+      repo (less strict).
+
+  CreateOIDCProvider:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: >-
+      Create the GitHub OIDC provider. Set to "false" if the provider
+      (token.actions.githubusercontent.com) already exists in this account.
+
+Conditions:
+  ShouldCreateOIDCProvider: !Equals [!Ref CreateOIDCProvider, "true"]
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+Resources:
+
+  # --- Terraform remote state bucket ---------------------------------------
+  TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${ProjectName}-tfstate-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: terraform-remote-state
+
+  # --- GitHub OIDC provider -------------------------------------------------
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: ShouldCreateOIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      # GitHub's OIDC thumbprint. IAM no longer strictly validates this for
+      # this provider, but the field is still required.
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+
+  # --- App-deploy role (used by deploy.yml): ECR push + ECS deploy ----------
+  AppDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-github-deploy"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - ShouldCreateOIDCProvider
+                - !Ref GitHubOIDCProvider
+                - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}"
+      Policies:
+        - PolicyName: ecr-ecs-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: EcrAuth
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: EcrPushPull
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                  - ecr:DescribeImages
+                Resource: !Sub "arn:${AWS::Partition}:ecr:*:${AWS::AccountId}:repository/${ProjectName}"
+              - Sid: EcsDeploy
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:RegisterTaskDefinition
+                  - ecs:UpdateService
+                Resource: "*"
+              - Sid: PassTaskRoles
+                Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-task-execution"
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-task"
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # --- Terraform-deploy role (used by terraform.yml): manage infra ----------
+  # Broad permissions to provision the DSB Lite infrastructure. Scoped to the
+  # services this project uses. Tighten further for production accounts.
+  TerraformDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-github-terraform"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - ShouldCreateOIDCProvider
+                - !Ref GitHubOIDCProvider
+                - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}"
+      Policies:
+        - PolicyName: terraform-state-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: StateBucket
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !GetAtt TerraformStateBucket.Arn
+                  - !Sub "${TerraformStateBucket.Arn}/*"
+        - PolicyName: terraform-infra
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: InfraServices
+                Effect: Allow
+                Action:
+                  - ec2:*
+                  - ecs:*
+                  - ecr:*
+                  - elasticloadbalancing:*
+                  - logs:*
+                  - application-autoscaling:*
+                Resource: "*"
+              - Sid: IamForEcs
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:TagRole
+                  - iam:UntagRole
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-*"
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+# ---------------------------------------------------------------------------
+# Outputs — feed these into GitHub Actions repo variables and terraform init.
+# ---------------------------------------------------------------------------
+Outputs:
+  StateBucketName:
+    Description: S3 bucket for Terraform remote state. Use as backend `bucket` and repo var TF_STATE_BUCKET.
+    Value: !Ref TerraformStateBucket
+
+  AppDeployRoleArn:
+    Description: Role ARN for deploy.yml. Set as repo variable AWS_ROLE_ARN.
+    Value: !GetAtt AppDeployRole.Arn
+
+  TerraformDeployRoleArn:
+    Description: Role ARN for terraform.yml. Set as repo variable TF_AWS_ROLE_ARN.
+    Value: !GetAtt TerraformDeployRole.Arn
+
+  TerraformInitHint:
+    Description: Ready-to-use terraform init backend flags.
+    Value: !Sub >-
+      terraform init
+      -backend-config="bucket=${TerraformStateBucket}"
+      -backend-config="key=${ProjectName}/terraform.tfstate"
+      -backend-config="region=${AWS::Region}"

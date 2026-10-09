@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="DSB Lite - a hands-on AWS deployment demo for The DevSec Blueprint. Structured DevSecOps and Cloud Security mastery, built through real systems, not theory."
+    />
+    <title>DSB Lite | The DevSec Blueprint</title>
+    <link rel="icon" type="image/svg+xml" href="/images/dsb-logo-light.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a class="brand" href="#top" aria-label="DSB Lite home">
+          <img
+            class="brand-logo"
+            src="/images/dsb-logo-light.svg"
+            alt="The DevSec Blueprint logo"
+            width="40"
+            height="40"
+          />
+          <span class="brand-text">DSB</span>
+        </a>
+        <div class="nav-links">
+          <a href="#how">How It Works</a>
+          <a href="#about">About</a>
+          <a href="#mission">Mission</a>
+          <a href="#connect">Connect</a>
+          <a
+            class="btn btn-primary btn-sm"
+            href="https://devsecblueprint.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Visit DSB</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <main id="top">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-inner">
+          <div>
+            <p class="eyebrow eyebrow-success">
+              <span class="pulse" aria-hidden="true"></span> Deployment successful
+            </p>
+            <h1>Congratulations — you deployed DSB Lite! 🎉</h1>
+            <p class="hero-lede">
+              This page is live on <strong>AWS ECS Fargate</strong>, behind an
+              Application Load Balancer, shipped from a Chainguard container you
+              built and pushed yourself. Nicely done. Now keep the momentum going:
+              follow us on every platform and start learning today.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#connect">Follow us on all socials</a>
+              <a
+                class="btn btn-ghost"
+                href="https://devsecblueprint.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Start learning today</a
+              >
+            </div>
+          </div>
+
+          <!-- Deployment status panel -->
+          <div class="hero-art">
+            <div class="hero-panel" aria-hidden="true">
+              <div class="hero-panel-head">
+                <span class="dot amber"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="panel-title">deploy&nbsp;·&nbsp;dsb-lite</span>
+              </div>
+              <div class="code-line"><span class="ok">✓</span> Image pushed to ECR</div>
+              <div class="code-line"><span class="ok">✓</span> Task definition registered</div>
+              <div class="code-line"><span class="ok">✓</span> ECS service updated</div>
+              <div class="code-line"><span class="ok">✓</span> Target group healthy</div>
+              <div class="code-line" style="margin-top:0.75rem;">
+                <span class="k">status:</span> <span class="s">"LIVE"</span> 🚀
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works -->
+      <section id="how" class="section alt">
+        <div class="section-head">
+          <h2>How The DevSec Blueprint Works</h2>
+          <p>
+            DSB provides a structured path for developing practical security
+            engineering skills, not simply consuming educational content.
+          </p>
+        </div>
+        <div class="section-narrow">
+          <div class="steps">
+            <div class="step">
+              <div class="icon-circle" aria-hidden="true">📚</div>
+              <span class="step-label">Learn</span>
+              <p>
+                Develop the foundations behind DevSecOps, cloud security, secure
+                software delivery, and security engineering.
+              </p>
+            </div>
+            <div class="step">
+              <div class="icon-circle" aria-hidden="true">🛠️</div>
+              <span class="step-label">Build</span>
+              <p>
+                Turn concepts into working systems through guided walkthroughs,
+                projects, and real infrastructure.
+              </p>
+            </div>
+            <div class="step">
+              <div class="icon-circle" aria-hidden="true">🚀</div>
+              <span class="step-label">Apply</span>
+              <p>
+                Solve practical engineering problems through projects and capstones
+                designed to test what you've learned.
+              </p>
+            </div>
+            <div class="step">
+              <div class="icon-circle" aria-hidden="true">🌱</div>
+              <span class="step-label">Grow</span>
+              <p>
+                Learn alongside other builders, get feedback, strengthen your
+                career, and keep developing as an engineer.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section id="about" class="section">
+        <div class="section-head">
+          <h2>About The DevSec Blueprint</h2>
+          <p>
+            Building security engineers through real systems. Structured DevSecOps
+            and Cloud Security mastery, built through real systems, not theory.
+          </p>
+        </div>
+        <div class="section-narrow about-body">
+          <div class="about-intro">
+            <p>
+              The DevSec Blueprint (DSB) is a practical learning platform designed
+              for professionals building skills across DevSecOps, Cloud Security,
+              and modern security engineering. It combines foundational curriculum,
+              technical walkthroughs, guided projects, mini-capstones, reference
+              implementations, and community support into structured learning
+              experiences that reflect how security work is performed across real
+              systems.
+            </p>
+            <p>
+              DSB exists to bridge the gap between understanding individual concepts
+              and knowing how to apply them inside a complete system, connecting
+              architecture, automation, security controls, troubleshooting, and
+              technical communication. It is built by security engineers, cloud
+              practitioners, and technical educators, led by founder
+              <strong>Damien Burks</strong>.
+            </p>
+            <p>
+              DSB Lite is a hands-on reference deployment from that community: a
+              small service shipped to AWS the same way DSB teaches it.
+            </p>
+          </div>
+
+          <p class="about-stack-label">What's running under the hood</p>
+          <ul class="stack-grid">
+            <li class="stack-card">
+              <span class="stack-check" aria-hidden="true">✓</span>
+              <span class="stack-name">Node.js + Express</span>
+              <span class="stack-desc">Serving a static single-page site</span>
+            </li>
+            <li class="stack-card">
+              <span class="stack-check" aria-hidden="true">✓</span>
+              <span class="stack-name">Docker</span>
+              <span class="stack-desc">Built on hardened Chainguard images</span>
+            </li>
+            <li class="stack-card">
+              <span class="stack-check" aria-hidden="true">✓</span>
+              <span class="stack-name">AWS ECS Fargate</span>
+              <span class="stack-desc">Running behind an Application Load Balancer</span>
+            </li>
+            <li class="stack-card">
+              <span class="stack-check" aria-hidden="true">✓</span>
+              <span class="stack-name">Terraform</span>
+              <span class="stack-desc">Fully reproducible infrastructure</span>
+            </li>
+            <li class="stack-card">
+              <span class="stack-check" aria-hidden="true">✓</span>
+              <span class="stack-name">GitHub Actions</span>
+              <span class="stack-desc">OIDC for keyless deploys</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Mission -->
+      <section id="mission" class="section alt">
+        <div class="section-head">
+          <h2>Our Mission</h2>
+        </div>
+        <div class="section-narrow" style="max-width: 56rem;">
+          <blockquote class="mission">
+            To make practical DevSecOps and Cloud Security education more
+            structured, accessible, and engineering-driven&mdash;empowering
+            practitioners to build, secure, operate, and defend real production
+            systems with confidence.
+          </blockquote>
+        </div>
+      </section>
+
+      <!-- Connect -->
+      <section id="connect" class="section">
+        <div class="section-head">
+          <h2>Give us a follow on all socials</h2>
+          <p>
+            You just shipped real infrastructure. Stay in the loop and keep
+            building with us, follow along on every platform below.
+          </p>
+        </div>
+        <div class="links-grid">
+          <a class="link-card" href="https://devsecblueprint.com" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            </span>
+            <span>
+              <span class="link-title">Website</span><br />
+              <span class="link-sub">devsecblueprint.com</span>
+            </span>
+          </a>
+          <a class="link-card" href="https://github.com/devsecblueprint/devsecblueprint" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            </span>
+            <span>
+              <span class="link-title">GitHub</span><br />
+              <span class="link-sub">@devsecblueprint</span>
+            </span>
+          </a>
+          <a class="link-card" href="https://discord.gg/SkYECC4TD8" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            </span>
+            <span>
+              <span class="link-title">Discord</span><br />
+              <span class="link-sub">Join the community</span>
+            </span>
+          </a>
+          <a class="link-card" href="https://www.linkedin.com/company/devsecblueprint" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14zM8.34 18.34V10.5H5.67v7.84h2.67zM7 9.3a1.55 1.55 0 100-3.1 1.55 1.55 0 000 3.1zm11.34 9.04v-4.3c0-2.3-1.23-3.37-2.87-3.37-1.32 0-1.91.73-2.24 1.24v-1.06h-2.67c.04.75 0 7.84 0 7.84h2.67v-4.38c0-.24.02-.48.09-.65.19-.48.63-.98 1.36-.98.96 0 1.35.73 1.35 1.8v4.21h2.67z"/></svg>
+            </span>
+            <span>
+              <span class="link-title">LinkedIn</span><br />
+              <span class="link-sub">The DevSec Blueprint</span>
+            </span>
+          </a>
+          <a class="link-card" href="https://x.com/devsecblueprint" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </span>
+            <span>
+              <span class="link-title">X / Twitter</span><br />
+              <span class="link-sub">@devsecblueprint</span>
+            </span>
+          </a>
+          <a class="link-card" href="https://www.instagram.com/devsecblueprint" target="_blank" rel="noopener noreferrer">
+            <span class="li" aria-hidden="true">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 01-1.38-.9 3.7 3.7 0 01-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.21 15.58 2.2 15.2 2.2 12s0-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.21 8.8 2.2 12 2.2zm0 1.8c-3.15 0-3.5 0-4.74.07-.9.04-1.38.19-1.7.32-.43.16-.74.36-1.06.68-.32.32-.52.63-.68 1.06-.13.32-.28.8-.32 1.7C3.2 8.85 3.2 9.2 3.2 12s0 3.15.07 4.39c.04.9.19 1.38.32 1.7.16.43.36.74.68 1.06.32.32.63.52 1.06.68.32.13.8.28 1.7.32 1.24.07 1.59.07 4.74.07s3.5 0 4.74-.07c.9-.04 1.38-.19 1.7-.32.43-.16.74-.36 1.06-.68.32-.32.52-.63.68-1.06.13-.32.28-.8.32-1.7.07-1.24.07-1.59.07-4.39s0-3.15-.07-4.39c-.04-.9-.19-1.38-.32-1.7a2.85 2.85 0 00-.68-1.06 2.85 2.85 0 00-1.06-.68c-.32-.13-.8-.28-1.7-.32C15.5 4 15.15 4 12 4zm0 3.06A4.94 4.94 0 1112 17a4.94 4.94 0 010-9.88zm0 1.8a3.14 3.14 0 100 6.28 3.14 3.14 0 000-6.28zm5.15-.86a1.15 1.15 0 110 2.3 1.15 1.15 0 010-2.3z"/></svg>
+            </span>
+            <span>
+              <span class="link-title">Instagram</span><br />
+              <span class="link-sub">@devsecblueprint</span>
+            </span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-cols">
+          <div>
+            <h3>The DevSec Blueprint</h3>
+            <p class="tag">
+              Structured DevSecOps and Cloud Security mastery. Built through real
+              systems, not theory.
+            </p>
+          </div>
+          <div>
+            <h4>Connect</h4>
+            <ul>
+              <li><a href="https://github.com/devsecblueprint/devsecblueprint" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://discord.gg/SkYECC4TD8" target="_blank" rel="noopener noreferrer">Discord</a></li>
+              <li><a href="https://www.linkedin.com/company/devsecblueprint" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+              <li><a href="https://x.com/devsecblueprint" target="_blank" rel="noopener noreferrer">X / Twitter</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Explore</h4>
+            <ul>
+              <li><a href="https://devsecblueprint.com" target="_blank" rel="noopener noreferrer">Website</a></li>
+              <li><a href="#how">How It Works</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#connect">Connect</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; <span id="year"></span> The DevSec Blueprint &middot; DSB Lite</p>
+          <p class="meta" id="build-meta" aria-live="polite">Loading build info&hellip;</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

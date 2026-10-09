@@ -1,0 +1,27 @@
+{
+  "name": "dsb-lite",
+  "version": "1.0.0",
+  "description": "DSB Lite - a lightweight single-page website for The DevSec Blueprint, served by Node.js/Express and deployed to AWS ECS Fargate with Terraform.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "devsec-blueprint",
+    "express",
+    "ecs",
+    "fargate",
+    "terraform",
+    "aws"
+  ],
+  "author": "The DevSec Blueprint",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

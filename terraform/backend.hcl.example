@@ -1,0 +1,9 @@
+# Copy to backend.hcl and fill in your values, then run:
+#   terraform init -backend-config=backend.hcl
+#
+# The bucket must already exist. It is created by the CloudFormation bootstrap
+# stack (../bootstrap/bootstrap.yaml); use its StateBucketName output here.
+
+bucket = "dsb-lite-tfstate-123456789012" # replace 1234... with your AWS account ID
+key    = "dsb-lite/terraform.tfstate"
+region = "us-east-1"
