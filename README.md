@@ -97,7 +97,29 @@ docker run --rm -p 3000:3000 dsb-lite:local
 
 ## Deploy to AWS
 
-### 1. Deploy the bootstrap stack (manual, one time)
+### 1. Fork this repository
+
+The CI/CD pipeline deploys from **your** repo into **your** AWS account, and the
+OIDC trust is scoped to a GitHub org/user — so you need your own copy first.
+
+1. Click **Fork** at the top of this repository and create the fork under your
+   own GitHub account or org (e.g. `your-org/dsb-lite`).
+2. Clone your fork locally:
+   ```bash
+   git clone https://github.com/<your-org>/dsb-lite.git
+   cd dsb-lite
+   ```
+3. Note your fork's GitHub **org/user slug** and its **numeric org ID** — the
+   bootstrap stack uses them to scope who may assume the deploy roles via OIDC:
+   ```bash
+   gh api /orgs/<your-org> --jq .id     # org account
+   gh api /users/<your-user> --jq .id   # personal account
+   ```
+
+> Everywhere below that references `devsecblueprint` / org ID `156617339`,
+> substitute your own fork's slug and ID.
+
+### 2. Deploy the bootstrap stack (manual, one time)
 
 Some things must exist **before** Terraform runs and back the pipeline that runs
 Terraform: the S3 state bucket, the GitHub OIDC provider, and the CI deploy
@@ -111,13 +133,18 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     ProjectName=dsb-lite \
-    GitHubRepository=devsecblueprint/dsb-lite \
-    GitHubBranch=main
+    GitHubOrg=devsecblueprint \
+    GitHubOrgId=156617339
 
 # Read the outputs you'll need below:
 aws cloudformation describe-stacks --stack-name dsb-lite-bootstrap \
   --query 'Stacks[0].Outputs' --output table
 ```
+
+> Use **your fork's** `GitHubOrg` slug and `GitHubOrgId` (from step 1). The trust
+> policy allows any repo under that org, matched on the immutable org ID so a
+> look-alike org cannot assume the roles. If the GitHub OIDC provider already
+> exists in your account, add `CreateOIDCProvider=false`.
 
 This creates:
 
@@ -134,29 +161,21 @@ details (including reusing an existing OIDC provider).
 > Want purely local state instead? Delete `terraform/backend.tf` and run a plain
 > `terraform init` — but you'll still need the OIDC roles from the stack for CI.
 
-### 2. Provision infrastructure with Terraform
+### 3. Provision infrastructure with Terraform
 
-Initialize the S3 backend with the bucket from step 1, then apply:
-
-Use the `StateBucketName` from the bootstrap stack as the backend bucket:
+The S3 backend (bucket, key, region) is set statically in
+[`terraform/backend.tf`](terraform/backend.tf), so initialization is just
+`terraform init`. The bucket name follows the bootstrap convention
+`dsb-lite-tfstate-<account-id>` — update it in `backend.tf` to match your
+account before initializing.
 
 ```bash
 cd terraform
 cp example.tfvars terraform.tfvars   # edit region / sizing if desired
 
-BUCKET=$(aws cloudformation describe-stacks --stack-name dsb-lite-bootstrap \
-  --query "Stacks[0].Outputs[?OutputKey=='StateBucketName'].OutputValue" --output text)
-
-terraform init \
-  -backend-config="bucket=${BUCKET}" \
-  -backend-config="key=dsb-lite/terraform.tfstate" \
-  -backend-config="region=us-east-1"
-
+terraform init
 terraform apply
 ```
-
-Prefer a file? Copy `backend.hcl.example` to `backend.hcl`, fill it in, and run
-`terraform init -backend-config=backend.hcl`. (`backend.hcl` is gitignored.)
 
 Terraform prints these outputs:
 
@@ -172,9 +191,9 @@ Terraform prints these outputs:
 > start until the pipeline (step 4) pushes one. This is expected. The service
 > uses `latest` as a placeholder until then.
 
-### 3. Configure GitHub Actions
+### 4. Configure GitHub Actions
 
-In your GitHub repo, add a **repository variable** named `AWS_ROLE_ARN` set to
+In your forked repo, add a **repository variable** named `AWS_ROLE_ARN` set to
 the `AppDeployRoleArn` output from the bootstrap stack:
 
 `Settings → Secrets and variables → Actions → Variables → New repository variable`
@@ -182,7 +201,7 @@ the `AppDeployRoleArn` output from the bootstrap stack:
 If your region/names differ from the defaults, update the `env:` block at the
 top of `.github/workflows/deploy.yml` to match your Terraform outputs.
 
-### 4. Build and deploy the image
+### 5. Build and deploy the image
 
 Push to `main` (or run the workflow manually from the Actions tab). The pipeline:
 
@@ -211,13 +230,15 @@ OIDC (no long-lived keys):
 
 Set these under `Settings → Secrets and variables → Actions → Variables`:
 
-All three come from the **bootstrap stack outputs** (step 1):
+Both come from the **bootstrap stack outputs** (step 2):
 
 | Variable | Used by | Bootstrap output |
 | --- | --- | --- |
 | `AWS_ROLE_ARN` | deploy.yml | `AppDeployRoleArn` (ECR + ECS permissions) |
 | `TF_AWS_ROLE_ARN` | terraform.yml | `TerraformDeployRoleArn` (broader infra permissions) |
-| `TF_STATE_BUCKET` | terraform.yml | `StateBucketName` |
+
+> The Terraform state bucket is **not** a repo variable — it's hardcoded in
+> `terraform/backend.tf`.
 
 > The app-deploy role is deliberately scoped to ECR + ECS. Terraform needs to
 > create/modify ALB, IAM, ECS, ECR, CloudWatch, etc., so give `terraform.yml` a
@@ -244,7 +265,6 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  TF_STATE_KEY: dsb-lite/terraform.tfstate
   WORKING_DIR: terraform
 
 permissions:
@@ -282,11 +302,8 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Terraform init
-        run: |
-          terraform init -input=false \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=${TF_STATE_KEY}" \
-            -backend-config="region=${AWS_REGION}"
+        # Backend bucket/key/region are hardcoded in terraform/backend.tf.
+        run: terraform init -input=false
 
       - name: Terraform validate
         run: terraform validate -no-color
@@ -313,9 +330,10 @@ jobs:
         run: terraform apply -input=false -auto-approve
 ```
 
-> This workflow expects the S3 backend and OIDC roles to already exist. Deploy
-> the CloudFormation bootstrap stack once first (see step 1) and set
-> `TF_STATE_BUCKET` / `TF_AWS_ROLE_ARN` to its outputs.
+> This workflow expects the S3 backend bucket and OIDC roles to already exist.
+> Deploy the CloudFormation bootstrap stack once first (see step 2) and set
+> `TF_AWS_ROLE_ARN` to its output. The backend bucket is hardcoded in
+> `terraform/backend.tf`.
 
 ---
 
@@ -364,8 +382,8 @@ aws ecs describe-services \
 
 **GitHub Actions: `Not authorized to perform sts:AssumeRoleWithWebIdentity`**
 - Confirm `AWS_ROLE_ARN` / `TF_AWS_ROLE_ARN` match the bootstrap stack outputs.
-- Confirm `GitHubRepository`/`GitHubBranch` in the bootstrap stack match the repo
-  and branch the workflow runs from.
+- Confirm `GitHubOrg`/`GitHubOrgId` in the bootstrap stack match **your fork's**
+  org slug and numeric org ID (the OIDC `sub` embeds the immutable org ID).
 - Confirm the workflow has `permissions: id-token: write`.
 
 **`RegisterTaskDefinition` errors about unexpected fields**
@@ -397,9 +415,11 @@ aws elbv2 describe-load-balancers --names dsb-lite-alb
 ```
 
 The bootstrap stack (state bucket, OIDC provider, deploy roles) is separate and
-**not** removed by `terraform destroy`. The state bucket also has a `Retain`
-deletion policy so it survives stack deletion. To remove the bootstrap resources,
-empty and delete the state bucket, then delete the stack:
+**not** removed by `terraform destroy`. The state bucket uses a `Delete`
+deletion policy, so the stack removes it on teardown — but CloudFormation can
+only delete an **empty** bucket. Empty it first (it's versioned), then delete the
+stack. See [`bootstrap/README.md`](bootstrap/README.md) for the full teardown
+(including the state backup step):
 
 ```bash
 aws cloudformation delete-stack --stack-name dsb-lite-bootstrap
