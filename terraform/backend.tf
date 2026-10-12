@@ -23,10 +23,9 @@
 # ---------------------------------------------------------------------------
 terraform {
   backend "s3" {
-    bucket       = "dsb-lite-tfstate-083281668894"
+    bucket       = "dsb-lite-tfstate-<YOUR_ACCOUNT_ID>"
     key          = "dsb-lite/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
-    use_lockfile = true
   }
 }
