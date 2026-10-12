@@ -166,13 +166,41 @@ details (including reusing an existing OIDC provider).
 > Want purely local state instead? Delete `terraform/backend.tf` and run a plain
 > `terraform init` — but you'll still need the OIDC roles from the stack for CI.
 
-### 3. Provision infrastructure with Terraform
+### 3. Point the Terraform backend at your state bucket
 
-The S3 backend (bucket, key, region) is set statically in
-[`terraform/backend.tf`](terraform/backend.tf), so initialization is just
-`terraform init`. The bucket name follows the bootstrap convention
-`dsb-lite-tfstate-<account-id>` — update it in `backend.tf` to match your
-account before initializing.
+The S3 backend (bucket, key, region) is set **statically** in
+[`terraform/backend.tf`](terraform/backend.tf). Before you init, you **must**
+update the `bucket` value to the `StateBucketName` the bootstrap stack created
+in **your** account (step 2) — the committed value points at the upstream
+account and will not work for you.
+
+Grab the exact name from the stack output:
+
+```bash
+aws cloudformation describe-stacks --stack-name dsb-lite-bootstrap \
+  --query "Stacks[0].Outputs[?OutputKey=='StateBucketName'].OutputValue" \
+  --output text
+# -> dsb-lite-tfstate-<your-account-id>
+```
+
+Then edit `terraform/backend.tf` and set that value:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket       = "dsb-lite-tfstate-<your-account-id>"  # <-- from StateBucketName
+    key          = "dsb-lite/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+```
+
+> The same `bucket` value is used by the `terraform.yml` CI workflow (it also
+> reads `backend.tf`), so updating it here fixes both local and CI runs.
+
+### 4. Provision infrastructure with Terraform
 
 ```bash
 cd terraform
@@ -193,10 +221,10 @@ Terraform prints these outputs:
 | `application_url` | Public HTTP URL of the site |
 
 > On the first `apply` there is no image in ECR yet, so the ECS task cannot
-> start until the pipeline (step 4) pushes one. This is expected. The service
+> start until the pipeline (step 6) pushes one. This is expected. The service
 > uses `latest` as a placeholder until then.
 
-### 4. Configure GitHub Actions
+### 5. Configure GitHub Actions
 
 In your forked repo, add a **repository variable** named `AWS_ROLE_ARN` set to
 the `AppDeployRoleArn` output from the bootstrap stack:
@@ -206,7 +234,7 @@ the `AppDeployRoleArn` output from the bootstrap stack:
 If your region/names differ from the defaults, update the `env:` block at the
 top of `.github/workflows/deploy.yml` to match your Terraform outputs.
 
-### 5. Build and deploy the image
+### 6. Build and deploy the image
 
 Push to `main` (or run the workflow manually from the Actions tab). The pipeline:
 
