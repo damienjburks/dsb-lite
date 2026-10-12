@@ -104,12 +104,17 @@ OIDC trust is scoped to a GitHub org/user — so you need your own copy first.
 
 1. Click **Fork** at the top of this repository and create the fork under your
    own GitHub account or org (e.g. `your-org/dsb-lite`).
-2. Clone your fork locally:
+2. **Enable GitHub Actions on the fork.** Forked repos have Actions **disabled
+   by default**. Open the fork's **Actions** tab in the GitHub console and click
+   **"I understand my workflows, go ahead and enable them"** — otherwise
+   `deploy.yml` / `terraform.yml` never run (and no amount of OIDC setup will
+   trigger them).
+3. Clone your fork locally:
    ```bash
    git clone https://github.com/<your-org>/dsb-lite.git
    cd dsb-lite
    ```
-3. Note your fork's GitHub **org/user slug** and its **numeric org ID** — the
+4. Note your fork's GitHub **org/user slug** and its **numeric org ID** — the
    bootstrap stack uses them to scope who may assume the deploy roles via OIDC:
    ```bash
    gh api /orgs/<your-org> --jq .id     # org account
